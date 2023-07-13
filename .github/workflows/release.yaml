@@ -38,7 +38,7 @@ jobs:
         run: cp harness_${{ matrix.os }}_${{ matrix.arch }} release/
 
       - name: Copy install script to release directory
-        run: cp install_scripts/${{ matrix.os }}/install release/
+        run: cp install_scripts/${{ matrix.os }}/* release/
 
   release:
     needs: build
