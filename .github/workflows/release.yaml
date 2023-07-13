@@ -29,7 +29,7 @@ jobs:
           go-version: 1.x # Specify the desired Go version here
 
       - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
-        run: go build -o harness_{{ matrix.os }}_${{ matrix.arch }} -v
+        run: go build -o harness_${{ matrix.os }}_${{ matrix.arch }} -v
 
       - name: Create release directory
         run: mkdir release
