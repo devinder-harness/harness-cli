@@ -32,13 +32,13 @@ jobs:
         run: go build -o harness_${{ matrix.os }}_${{ matrix.arch }} -v
 
       - name: Create release directory
-        run: mkdir release
+        run: mkdir -p ${{ github.workspace }}/release
 
       - name: Copy binary to release directory
-        run: cp harness_${{ matrix.os }}_${{ matrix.arch }} release/
+        run: cp harness_${{ matrix.os }}_${{ matrix.arch }} ${{ github.workspace }}/release/
 
       - name: Copy install script to release directory
-        run: cp install_scripts/${{ matrix.os }}/* release/
+        run: cp install_scripts/${{ matrix.os }}/* ${{ github.workspace }}/release/
 
   release:
     needs: build
@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Create artifact
-        run: zip -r release.zip ./release/
+        run: zip -r release.zip ${{ github.workspace }}/release/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
