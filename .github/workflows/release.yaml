@@ -39,6 +39,8 @@ jobs:
 
       - name: Copy install script to release directory
         run: cp install_scripts/${{ matrix.os }}/* ${{ github.workspace }}/release/
+      - name: Current working dir is
+        run: pwd
 
   release:
     needs: build
