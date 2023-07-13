@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Create artifact
-        run: zip -r release.zip release/
+        run: zip -r release.zip ./release/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
