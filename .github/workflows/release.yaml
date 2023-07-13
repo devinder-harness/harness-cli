@@ -2,9 +2,9 @@ on:
   release:
     types: [created]
   push:
-    branches: [ "feat/install-cli" ]
+    branches: ["develop" ]
   pull_request:
-    branches: [ "feat/install-cli" ]
+    branches: [ "develop" ]
 permissions:
   contents: write
   packages: write
