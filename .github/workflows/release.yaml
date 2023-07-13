@@ -41,6 +41,8 @@ jobs:
         run: cp install_scripts/${{ matrix.os }}/* ${{ github.workspace }}/release/
       - name: Current working dir is
         run: pwd
+      - name: list release
+        run: pwd
 
   release:
     needs: build
@@ -49,7 +51,7 @@ jobs:
 
     steps:
       - name: Create artifact
-        run: zip -r release.zip ${{ github.workspace }}/release/
+        run: tar -czvf release.tar.gz -C ${{ github.workspace }}/release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
