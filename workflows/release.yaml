@@ -1,51 +1,56 @@
+name: Release
+
 on:
-  release:
-    types: [created]
   push:
-    branches: [ "feat/install-cli" ]
-  pull_request:
-    branches: [ "feat/install-cli" ]
-permissions:
-  contents: write
-  packages: write
+    branches:
+      - main
 
 jobs:
-  releases-matrix:
-    name: Release Go Binary
+  build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
+        os: [linux, windows, mac]
+        arch: [amd64, arm64]
         exclude:
-          - goarch: arm64
-            goos: darwin
-          - goarch: arm64
-            goos: windows
+          - os: mac
+            arch: arm64
+          - os: windows
+            arch: arm64
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: wangyoucao577/go-release-action@v1.34
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          goos: ${{ matrix.goos }}
-          goarch: ${{ matrix.goarch }}
-          goversion: 1.19
-          project_path: "."
-          binary_name: "harness"
-          ldflags: ${{ format('-X "main.Version={0}"', github.ref_name) }}
-      - name: Move binary to the release directory
-        run: |
-          mkdir release
-          mv harness release/
-          cp ./install_scripts/${{ matrix.goos }}/* release/
-        working-directory: ${{ github.workspace }}
-      - name: Bundle everything inside release directory
-        run: |
-          tar czvf release.tar.gz release/
-        working-directory: ${{ github.workspace }}
-      - name: Upload release artifacts
+          go-version: 1.x # Specify the desired Go version here
+
+      - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
+        run: go build -o harness_{{ matrix.os }}_${{ matrix.arch }} -v
+
+      - name: Create release directory
+        run: mkdir release
+
+      - name: Copy binary to release directory
+        run: cp harness_${{ matrix.os }}_${{ matrix.arch }} release/
+
+      - name: Copy install script to release directory
+        run: cp install_scripts/${{ matrix.os }}/install release/
+
+  release:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create artifact
+        run: zip -r release.zip release/
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: release-artifacts
-          path: release.tar.gz
+          name: harness-release
+          path: release.zip
