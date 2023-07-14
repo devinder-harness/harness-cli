@@ -39,41 +39,17 @@ jobs:
 
       - name: Copy install script to release directory
         run: cp install_scripts/${{ matrix.os }}/* ${{ github.workspace }}/release/
-      - name: Current working dir is
-        run: pwd
-      - name: list release
-        run: ls
+      - name: Tar release directory
+        run: tar -czvf release_${{ matrix.os }}_${{ matrix.arch }}.tar.gz -C ${{ github.workspace }}/release .
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: harness-cli-release
-          path: release.tar.gz
-
-
-  release:
-    needs: build
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Create artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: harness-cli-release
-          path: release.tar.gz
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: harness-release
-          path: release.tar.gz
+          path: release_${{ matrix.os }}_${{ matrix.arch }}.tar.gz
       - name: Perform Release
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          version=$(echo "${{ github.ref }}" | cut -d / -f 3)-${{ needs.build.outputs.commit }}
+          version=$(echo "${{ github.ref_name }}" | cut -d / -f 3)-${{ github.sha }}
           gh release create $version --title "Version $version" --notes "Release notes" -R owner/repo
           gh release upload $version release.tar.gz -R owner/repo
           echo "Release completed"
-
-        
-
