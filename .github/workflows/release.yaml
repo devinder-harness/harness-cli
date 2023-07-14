@@ -1,55 +1,34 @@
-name: Release
-
 on:
-  push:
-    branches:
-      - develop
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
-  build:
+  releases-matrix:
+    name: Release Go Binary
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        os: [linux, windows, mac]
-        arch: [amd64, arm64]
+        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
         exclude:
-          - os: mac
-            arch: arm64
-          - os: windows
-            arch: arm64
-
+          - goarch: arm64
+            goos: darwin
+          - goarch: arm64
+            goos: windows
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: wangyoucao577/go-release-action@v1.34
         with:
-          go-version: 1.x # Specify the desired Go version here
-
-      - name: Build for ${{ matrix.os }}/${{ matrix.arch }}
-        run: go build -o harness_${{ matrix.os }}_${{ matrix.arch }} -v
-
-      - name: Create release directory
-        run: mkdir -p ${{ github.workspace }}/release
-
-      - name: Copy binary to release directory
-        run: cp harness_${{ matrix.os }}_${{ matrix.arch }} ${{ github.workspace }}/release/
-
-      - name: Copy install script to release directory
-        run: cp install_scripts/${{ matrix.os }}/* ${{ github.workspace }}/release/
-      - name: Tar release directory
-        run: tar -czvf release_${{ matrix.os }}_${{ matrix.arch }}.tar.gz -C ${{ github.workspace }}/release .
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: harness-cli-release
-          path: release_${{ matrix.os }}_${{ matrix.arch }}.tar.gz
-      - name: Perform Release
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          version=$(echo "${{ github.ref_name }}" | cut -d / -f 3)-${{ github.sha }}
-          gh release create $version --title "Version $version" --notes "Release notes" -R owner/repo
-          gh release upload $version release.tar.gz -R owner/repo
-          echo "Release completed"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          goversion: 1.19
+          project_path: "."
+          binary_name: "harness"
+          ldflags: ${{ format('-X "main.Version={0}"', github.ref_name) }}
+          extra_files: ./install_scripts/${{ matrix.goos }}/*
