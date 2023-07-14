@@ -42,7 +42,13 @@ jobs:
       - name: Current working dir is
         run: pwd
       - name: list release
-        run: pwd
+        run: ls
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: harness-cli-release
+          path: release.tar.gz
+
 
   release:
     needs: build
@@ -51,10 +57,13 @@ jobs:
 
     steps:
       - name: Create artifact
-        run: tar -czvf release.tar.gz -C ${{ github.workspace }}/release .
+        uses: actions/download-artifact@v2
+        with:
+          name: harness-release
+          path: release.tar.gz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: harness-release
-          path: release.zip
+          path: release.tar.gz
