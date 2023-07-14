@@ -59,7 +59,7 @@ jobs:
       - name: Create artifact
         uses: actions/download-artifact@v2
         with:
-          name: harness-release
+          name: harness-cli-release
           path: release.tar.gz
 
       - name: Upload artifact
@@ -67,3 +67,13 @@ jobs:
         with:
           name: harness-release
           path: release.tar.gz
+      - name: Perform Release
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          version=$(echo "${{ github.ref }}" | cut -d / -f 3)-${{ needs.build.outputs.commit }}
+          gh release create $version --title "Version $version" --notes "Release notes" -R owner/repo
+          gh release upload $version release.tar.gz -R owner/repo
+          echo "Release completed"
+
+        
+
